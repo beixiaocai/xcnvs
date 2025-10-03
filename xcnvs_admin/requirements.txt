@@ -11,3 +11,4 @@ pgvector==0.4.1
 numpy==1.26.2
 opencv-python==4.8.1.78
 sentence-transformers==5.1.1
+openai==1.66.3
