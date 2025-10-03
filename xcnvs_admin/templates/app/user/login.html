@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="/static/images/favicon.ico?1001">
+    <title>登录 | {{ settings.name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            background-image: radial-gradient(circle at 25% 25%, rgba(124, 166, 252, 0.05) 0%, transparent 50%),
+                             radial-gradient(circle at 75% 75%, rgba(124, 166, 252, 0.05) 0%, transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        /* 添加装饰元素 */
+        .decorative-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(124, 166, 252, 0.2) 0%, rgba(124, 166, 252, 0) 70%);
+            z-index: -1;
+        }
+        .shape-1 {
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            left: 15%;
+        }
+        .shape-2 {
+            width: 400px;
+            height: 400px;
+            bottom: 10%;
+            right: 10%;
+        }
+        /* 主体布局 */
+        .login-wrapper {
+            display: flex;
+            max-width: 1000px;
+            width: 100%;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+            background-color: white;
+        }
+        /* 左侧图片区域 */
+        .login-image {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            background-color: #f8f9ff;
+            position: relative;
+        }
+        .login-image h2 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .login-image p {
+            color: #666;
+            text-align: center;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        .illustration {
+            max-width: 100%;
+            height: auto;
+            animation: float 6s ease-in-out infinite;
+        }
+        /* 右侧表单区域 */
+        .login-form {
+            flex: 1;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .login-form h1 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .login-form p.subtitle {
+            color: #666;
+            margin-bottom: 40px;
+        }
+        .form-group {
+            margin-bottom: 24px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 14px 20px;
+            border: 1px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background-color: #fafbfc;
+        }
+        .form-control:focus {
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+            outline: none;
+            background-color: white;
+        }
+        .form-control::placeholder {
+            color: #999;
+        }
+        .select-container {
+            position: relative;
+        }
+        .select-container select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            padding-right: 40px;
+        }
+        .password-container {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s ease;
+        }
+        .toggle-password:hover {
+            color: #666;
+        }
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .remember-me input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .remember-me label {
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 0;
+            font-weight: normal;
+        }
+        .forgot-password {
+            color: #4a90e2;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        .forgot-password:hover {
+            color: #357abd;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.6s ease;
+        }
+        .btn:hover:before {
+            left: 100%;
+        }
+        .btn:hover {
+            box-shadow: 0 10px 20px rgba(74, 144, 226, 0.3);
+            transform: translateY(-2px);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .register-link a {
+            color: #4a90e2;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .register-link a:hover {
+            color: #357abd;
+        }
+        /* 加载动画 */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .login-wrapper {
+                flex-direction: column;
+                margin: 20px;
+            }
+            .login-image {
+                padding: 40px 20px;
+                order: 2;
+            }
+            .login-form {
+                padding: 40px 20px;
+                order: 1;
+            }
+            .login-image h2 {
+                font-size: 24px;
+            }
+            .shape-1,
+            .shape-2 {
+                display: none;
+            }
+        }
+        /* 动画效果 */
+        .slide-in {
+            animation: slideIn 0.5s ease forwards;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* 延迟动画 */
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+        .delay-3 {
+            animation-delay: 0.3s;
+        }
+        .delay-4 {
+            animation-delay: 0.4s;
+        }
+        .delay-5 {
+            animation-delay: 0.5s;
+        }
+        /* 验证码样式 */
+        .captcha-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .captcha-group .form-control {
+            flex: 1;
+        }
+        .captcha-img {
+            width: 130px;
+            height: 44px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            object-fit: cover;
+            background-color: #f5f7fa;
+        }
+        .captcha-img:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+    <!-- 装饰元素 -->
+    <div class="decorative-shape shape-1"></div>
+    <div class="decorative-shape shape-2"></div>
+
+    <div class="login-wrapper">
+        <!-- 左侧图片区域 -->
+        <div class="login-image">
+            <h2>{{ settings.name }}</h2>
+            <!--<p></p>-->
+            <svg class="illustration" viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#e6f0ff" d="M120,60 L140,60 L140,110 L120,110 Z" />
+                <path fill="#4a90e2" d="M125,65 L135,65 L135,75 L125,75 Z" />
+                <path fill="#4a90e2" d="M125,80 L135,80 L135,90 L125,90 Z" />
+                <path fill="#4a90e2" d="M125,95 L135,95 L135,105 L125,105 Z" />
+
+                <path fill="#e6f0ff" d="M80,70 L100,70 L100,120 L80,120 Z" />
+                <path fill="#4a90e2" d="M85,75 L95,75 L95,85 L85,85 Z" />
+                <path fill="#4a90e2" d="M85,90 L95,90 L95,100 L85,100 Z" />
+                <path fill="#4a90e2" d="M85,105 L95,105 L95,115 L85,115 Z" />
+
+                <path fill="#e6f0ff" d="M40,80 L60,80 L60,130 L40,130 Z" />
+                <path fill="#4a90e2" d="M45,85 L55,85 L55,95 L45,95 Z" />
+                <path fill="#4a90e2" d="M45,100 L55,100 L55,110 L45,110 Z" />
+                <path fill="#4a90e2" d="M45,115 L55,115 L55,125 L45,125 Z" />
+
+                <!-- 飞舞的文件夹 -->
+                <path fill="#ff9966" d="M150,30 L170,30 L175,35 L175,55 L145,55 L145,35 Z" style="transform: rotate(-15deg)" />
+                <path fill="#ffcc00" d="M100,40 L120,40 L125,45 L125,65 L95,65 L95,45 Z" style="transform: rotate(10deg)" />
+                <path fill="#66cc99" d="M50,50 L70,50 L75,55 L75,75 L45,75 L45,55 Z" style="transform: rotate(-5deg)" />
+
+                <!-- 笔记本电脑 -->
+                <rect x="80" y="140" width="40" height="25" rx="2" fill="#333" />
+                <rect x="85" y="145" width="30" height="15" fill="#4a90e2" />
+            </svg>
+        </div>
+
+        <!-- 右侧表单区域 -->
+        <div class="login-form">
+            <h1 class="slide-in">欢迎回来</h1>
+            <p class="subtitle slide-in delay-1">输入您的账号密码登录</p>
+
+            <form id="loginForm" class="slide-in delay-2">
+
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" name="username" class="form-control" placeholder="请输入用户名">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <div class="password-container">
+                        <input type="password" name="password" class="form-control" placeholder="请输入密码">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="captcha">验证码</label>
+                    <div class="captcha-group">
+                           <input type="text" name="captcha" class="form-control" placeholder="请输入验证码">
+                         <img id="img_captcha" class="captcha-img" src="/static/images/loading.gif" alt="验证码">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn slide-in delay-4">登录</button>
+
+                <div class="register-link slide-in delay-5">
+                    ©2024-2025
+                </div>
+            </form>
+        </div>
+    </div>
+<!-- jQuery -->
+<script src="/static/lib/jquery/jquery.min.js"></script>
+<link href="/static/lib/jquery/toast/1.3.2/jquery.toast.css?v=2" rel="stylesheet">
+<script src="/static/lib/jquery/toast/1.3.2/jquery.toast.min.js"></script>
+<script src="/static/lib/jquery/toast/1.3.2/toast.js"></script>
+<!-- jsencrypt -->
+<script src="/static/lib/jsencrypt/3.3.1/jsencrypt.min.js"></script>
+    <script>
+        let public_key = '{{ loginPublicKey }}';
+        let isEnableLoginCaptcha = parseInt("{{ isEnableLoginCaptcha }}");
+        let eleUsername = $("input[name='username']");
+        let elePassword = $("input[name='password']");
+
+        console.log(typeof isEnableLoginCaptcha,isEnableLoginCaptcha)
+
+        function validate_email(val) {
+            return val.match(/^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/) != null;
+        }
+        function validate_tel(val) {
+            return val.match(/^[1](([3][0-9])|([4][5-9])|([5][0-3,5-9])|([6][5,6])|([7][0-8])|([8][0-9])|([9][1,8,9]))[0-9]{8}$/) != null;
+        }
+        function validate_password(val) {
+            return val.match(/^[\w_-]{6,16}$/) != null;
+        }
+        function f_login() {
+            let username = eleUsername.val().trim();
+            let password = elePassword.val().trim();
+
+            if(username.length === 0){
+                myAlert("请输入用户名","error");
+                return false;
+            }
+            if(username.length < 3){
+                myAlert("用户名格式不正确","error");
+                return false;
+            }
+            if(password.length === 0){
+                myAlert("请输入密码","error");
+                return false;
+            }
+            if(password.length < 3){
+                myAlert("密码格式不正确","error");
+                return false;
+            }
+            let captcha = "";
+            if(isEnableLoginCaptcha === 1){
+                let eleCaptcha= $("input[name='captcha']");
+                captcha = eleCaptcha.val().trim();
+                if(captcha.length === 0){
+                    myAlert("请输入验证码","error");
+                    return false;
+                }
+                if(captcha.length < 4){
+                    myAlert("验证码格式不正确","error");
+                    return false;
+                }
+            }
+
+            const encryptor = new JSEncrypt();
+            encryptor.setPublicKey(public_key);
+            let username_s = encryptor.encrypt(username);
+            let password_s = encryptor.encrypt(password);
+            $.ajax({
+                url: '/login',
+                type: "post",
+                data: {
+                    "username_s":username_s,
+                    "password_s":password_s,
+                    "captcha":captcha
+                },
+                dataType: "json",
+                timeout: 0,
+                error: function () {
+                    myAlert("网络异常，请确定网络正常！", "error");
+                },
+                success: function (res) {
+
+                    if(1000===res.code){
+                        window.location.href = "/";
+                    }else{
+                        myAlert(res.msg,"error",1000);
+                    }
+                }
+            });
+        }
+
+        // 添加表单输入动画
+        const inputs = document.querySelectorAll('.form-control');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+            });
+        });
+
+        // 表单提交处理
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            f_login();
+        });
+
+        document.onkeydown = function (e) { // 回车提交表单
+        // 兼容FF和IE和Opera
+            let theEvent = window.event || e;
+            let code = theEvent.keyCode || theEvent.which || theEvent.charCode;
+            if (code === 13) {
+                f_login();
+            }
+        }
+
+      if(isEnableLoginCaptcha === 1){
+
+        let eleImgCaptcha = document.getElementById('img_captcha');
+        function f_update_captcha(){
+            // 添加时间戳作为参数，确保浏览器重新加载图片
+            eleImgCaptcha.src = '/captcha?' + new Date().getTime();
+        }
+        eleImgCaptcha.addEventListener('click', f_update_captcha);
+
+        window.onload = function (){
+            setTimeout(function () {
+               f_update_captcha()
+            }, 10);
+        };
+    }
+    </script>
+</body>
+</html>

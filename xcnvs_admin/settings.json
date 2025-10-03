@@ -1,0 +1,9 @@
+{
+    "name": "管理平台",
+    "welcome": "欢迎",
+    "logo_url": "/static/images/user.png",
+    "bottom_name": "管理平台",
+    "is_show_author": true,
+    "author": "北小菜",
+    "author_link": "https://space.bilibili.com/487906612"
+}

@@ -1,0 +1,851 @@
+{% extends "app/base_site.html" %}
+
+{% block title %} 文搜管理 {% endblock title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+<style>
+    /* 全局样式重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* 容器样式 */
+.xc_container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 1px;
+}
+
+/* 头部样式 */
+.xc_header {
+    text-align: center;
+    margin-bottom: 10px;
+    padding-top: 10px;
+    /*padding: 5px 0;*/
+}
+
+.xc_logo {
+    font-size: 30px;
+    font-weight: 700;
+    color: #1a56db;
+    margin-bottom: 10px;
+}
+
+.xc_logo span {
+    color: #3730a3;
+}
+
+.xc_subtitle {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* 搜索区域样式 */
+.xc_search-section {
+    margin-bottom: 20px;
+}
+
+.xc_search-box {
+    display: flex;
+    gap: 10px;
+    max-width: 800px;
+    margin: 0 auto 15px;
+    position: relative;
+}
+
+#xc_search-input {
+    flex: 1;
+    padding: 15px 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.3s ease;
+    background-color: white;
+}
+
+#xc_search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.xc_search-btn {
+    padding: 15px 30px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.xc_search-btn:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.xc_search-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.xc_search-tips {
+    text-align: center;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.xc_tip-item {
+    margin: 0 8px;
+    padding: 2px 8px;
+    background-color: #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.xc_tip-item:hover {
+    background-color: #d1d5db;
+    color: #3b82f6;
+}
+
+/* 过滤区域样式 */
+.xc_filter-section {
+    background-color: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.xc_filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.xc_filter-group label {
+    font-weight: 500;
+    color: #4b5563;
+    min-width: 80px;
+}
+
+.xc_filter-group select {
+    padding: 5px 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background-color: white;
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.xc_filter-group select:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+/* 结果区域样式 */
+.xc_results-section {
+    margin-bottom: 30px;
+}
+
+.xc_results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.xc_results-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.xc_results-stats {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: #6b7280;
+}
+
+#xc_result-count {
+    font-weight: 300;
+    color: #3b82f6;
+}
+
+#xc_sort-filter {
+    padding: 6px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background-color: white;
+    font-size: 10px;
+}
+
+.xc_results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* 空状态样式 */
+.xc_empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: #9ca3af;
+}
+
+.xc_empty-icon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.xc_empty-state p {
+    font-size: 12px;
+}
+
+/* 结果卡片样式 */
+.xc_result-card {
+    background-color: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.xc_result-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.xc_card-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.xc_card-content {
+    padding: 15px;
+}
+
+.xc_card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.xc_card-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+/* 加载更多按钮 */
+.xc_load-more {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.xc_load-more-btn {
+    padding: 12px 30px;
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.xc_load-more-btn:not(:disabled):hover {
+    background-color: #e5e7eb;
+}
+
+.xc_load-more-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 页脚样式 */
+.xc_footer {
+    text-align: center;
+    padding: 30px 0;
+    color: #9ca3af;
+    font-size: 9px;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 50px;
+}
+
+/* 图片查看器模态框 */
+.xc_image-viewer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.xc_image-viewer.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.xc_viewer-content {
+    background-color: white;
+    border-radius: 12px;
+    max-width: 90%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    animation: modalIn 0.3s ease;
+}
+
+@keyframes modalIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.xc_close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.2s ease;
+}
+
+.xc_close-btn:hover {
+    background-color: white;
+    transform: scale(1.1);
+}
+
+.xc_close-btn svg {
+    width: 20px;
+    height: 20px;
+    color: #374151;
+}
+
+#xc_viewer-image {
+    width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+}
+
+.xc_image-info {
+    padding: 20px;
+    background-color: #f9fafb;
+}
+
+#xc_image-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
+}
+
+#xc_image-description {
+    color: #4b5563;
+    margin-bottom: 12px;
+}
+
+.xc_image-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 9px;
+    color: #6b7280;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .xc_container {
+        padding: 15px;
+    }
+
+    .xc_logo {
+        font-size: 25px;
+    }
+
+    .xc_search-box {
+        flex-direction: column;
+    }
+
+    .xc_search-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .xc_filter-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .xc_filter-group {
+        justify-content: space-between;
+    }
+
+    .xc_results-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .xc_results-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .xc_card-image {
+        height: 220px;
+    }
+
+    .xc_viewer-content {
+        max-width: 95%;
+        margin: 20px;
+    }
+}
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+
+  <div class="right_col" role="main">
+    <div class="">
+      <div class="row">
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="x_panel">
+   <!-- xc page start -->
+    <div class="xc_container">
+        <!-- 头部区域 -->
+        <header class="xc_header">
+            <h1 class="xc_logo">智慧视频<span>文搜系统</span></h1>
+            <p class="xc_subtitle">通过文字描述快速检索监控图像</p>
+        </header>
+
+        <!-- 搜索区域 -->
+        <section class="xc_search-section">
+            <div class="xc_search-box">
+                <input type="text" id="xc_search-input" placeholder="请输入您要搜索的监控图像描述...">
+                <button id="xc_search-btn" class="xc_search-btn">
+                    <svg class="xc_search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 21L16.65 16.65M19 10.5C19 15.1944 15.1944 19 10.5 19C5.80558 19 2 15.1944 2 10.5C2 5.80558 5.80558 2 10.5 2C15.1944 2 19 5.80558 19 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    搜索
+                </button>
+            </div>
+            <div class="xc_search-tips">
+                <span>提示：</span>
+                <span class="xc_tip-item">人员聚集</span>
+                <span class="xc_tip-item">消防通道阻塞</span>
+                <span class="xc_tip-item">异常行为</span>
+            </div>
+        </section>
+
+        <!-- 过滤区域 -->
+        <!--
+        <section class="xc_filter-section">
+            <div class="xc_filter-group">
+                <label>时间范围:</label>
+                <select id="xc_time-filter">
+                    <option value="all">全部时间</option>
+                    <option value="today">今天</option>
+                    <option value="week">本周</option>
+                    <option value="month">本月</option>
+                    <option value="custom">自定义</option>
+                </select>
+            </div>
+            <div class="xc_filter-group">
+                <label>监控区域:</label>
+                <select id="xc_area-filter">
+                    <option value="all">全部区域</option>
+                    <option value="entrance">入口</option>
+                    <option value="corridor">走廊</option>
+                    <option value="parking">停车场</option>
+                    <option value="meeting">会议室</option>
+                    <option value="warehouse">仓库</option>
+                </select>
+            </div>
+            <div class="xc_filter-group">
+                <label>图像质量:</label>
+                <select id="xc_quality-filter">
+                    <option value="all">全部质量</option>
+                    <option value="high">高清</option>
+                    <option value="medium">标清</option>
+                    <option value="low">流畅</option>
+                </select>
+            </div>
+        </section>
+        -->
+        <!-- 结果展示区域 -->
+        <section class="xc_results-section">
+            <div class="xc_results-header">
+                <h2>搜索结果</h2>
+                <div class="xc_results-stats">
+                    <span id="xc_result-duration">搜索耗时0秒</span>
+                    <span id="xc_result-count">0</span> 个结果
+                    <span class="xc_sort-option">
+                        <select id="xc_sort-filter">
+                            <option value="relevance">相关度优先</option>
+                            <!--<option value="time">时间优先</option>
+                            <option value="quality">质量优先</option>-->
+                        </select>
+                    </span>
+                </div>
+            </div>
+            <div class="xc_results-grid" id="xc_results-grid">
+                <!-- 初始状态提示 -->
+                <div class="xc_empty-state">
+                    <svg class="xc_empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 12H9.01M12 12H12.01M15 12H15.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <p>请输入关键词开始搜索</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 加载更多 -->
+        <div class="xc_load-more">
+            <button id="xc_load-more-btn" class="xc_load-more-btn">加载更多</button>
+        </div>
+
+        <!-- 页脚 -->
+        <!--
+        <footer class="xc_footer">
+            <p></p>
+        </footer>
+        -->
+
+    </div>
+
+    <!-- 图片查看器模态框 -->
+    <div id="xc_image-viewer" class="xc_image-viewer">
+        <div class="xc_viewer-content">
+            <button class="xc_close-btn">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <img id="xc_viewer-image" src="" alt="查看图片">
+            <div class="xc_image-info">
+                <h3 id="xc_image-title">图片标题</h3>
+                <p id="xc_image-description">图片描述信息</p>
+                <div class="xc_image-meta">
+                    <span id="xc_image-time">2023-06-01 12:00:00</span>
+                    <span id="xc_image-location">监控区域</span>
+                </div>
+            </div>
+        </div>
+    </div>
+   <!-- xc page end -->
+            </div>
+          </div>
+      </div>
+
+    </div>
+  </div>
+
+{% endblock content %}
+
+{% block javascripts %}
+  {{ block.super }}
+
+<script>
+    let curPage = 1;
+    let curPageSize = 8;
+
+    // DOM 元素
+    const eleSearchInput = document.getElementById('xc_search-input');
+    const eleSearchBtn = document.getElementById('xc_search-btn');
+    const resultsGrid = document.getElementById('xc_results-grid');
+    const eleResultDuration = document.getElementById('xc_result-duration');
+    const eleResultCount = document.getElementById('xc_result-count');
+    const loadMoreBtn = document.getElementById('xc_load-more-btn');
+    const imageViewer = document.getElementById('xc_image-viewer');
+    const viewerImage = document.getElementById('xc_viewer-image');
+    const viewerTitle = document.getElementById('xc_image-title');
+    const viewerDescription = document.getElementById('xc_image-description');
+    const viewerTime = document.getElementById('xc_image-time');
+    const viewerLocation = document.getElementById('xc_image-location');
+    const closeBtn = document.querySelector('.xc_close-btn');
+    const tipItems = document.querySelectorAll('.xc_tip-item');
+    const filters = {
+        sort: document.getElementById('xc_sort-filter')
+    };
+    // 对结果进行排序
+    function sortResults(results) {
+        const sortBy = filters.sort.value;
+
+        results.sort((a, b) => {
+            switch (sortBy) {
+                case 'time':
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                case 'quality':
+                    const qualityOrder = { high: 3, medium: 2, low: 1 };
+                    return qualityOrder[b.quality] - qualityOrder[a.quality];
+                case 'relevance':
+                default:
+                    return b.relevance - a.relevance;
+            }
+        });
+    }
+    function f_showData(data) {
+        // 更新结果计数
+        let curCount = parseInt(eleResultCount.textContent);
+        eleResultCount.textContent = curCount + data.length;
+
+        // 检查是否有结果
+        if (data.length === 0) {
+            resultsGrid.innerHTML = `
+                <div class="xc_empty-state">
+                    <svg class="xc_empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 8V12M12 16H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <p>没有找到匹配的结果</p>
+                    <p class="suggestion">请尝试使用其他关键词或调整筛选条件</p>
+                </div>
+            `;
+            return;
+        }
+
+        // 创建结果卡片
+        data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'xc_result-card';
+            card.innerHTML = `
+                <img src="${item.media_url}" alt="${item.title}" class="xc_card-image">
+                <div class="xc_card-content">
+                    <h3 class="xc_card-title">${item.title}</h3>
+                    <div class="xc_card-meta">
+                        <span>${item.last_update_time}</span>
+                        <span>${item.location}</span>
+                    </div>
+                </div>
+            `;
+
+            // 添加点击事件查看大图
+            card.addEventListener('click', () => {
+                f_openImageViewer(item);
+            });
+
+            resultsGrid.appendChild(card);
+        });
+
+
+    }
+    function f_updateLoadMoreBtn() {
+        //let totalCount = curPage * curPageSize;
+        //loadMoreBtn.disabled = totalCount >= currentResults.length;
+    }
+    function f_search() {
+        const keyword = eleSearchInput.value.toLowerCase().trim();
+        //const timeFilter = filters.time.value;
+        //const areaFilter = filters.area.value;
+        //const qualityFilter = filters.quality.value;
+        //console.log("keyword:",typeof keyword,keyword)
+        //console.log("timeFilter:",typeof timeFilter,timeFilter)
+        //console.log("areaFilter:",typeof areaFilter,areaFilter)
+        //console.log("qualityFilter:",typeof qualityFilter,qualityFilter)
+
+        curPage = 1
+        eleResultCount.textContent = 0;
+
+        // 模拟搜索延迟
+        resultsGrid.innerHTML = '<div class="xc_empty-state"><svg class="xc_empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8V12M12 16H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><p>搜索中...</p></div>';
+
+        $.ajax({
+               url: '/media/openIndex',
+               type: "get",
+               async: true,
+               data: {"p":curPage,"ps":curPageSize,"search_text":keyword},
+               dataType: "json",
+               timeout: 0,
+               error: function () {
+                   myAlert("网络异常，请确定网络正常！","error");
+               },
+               success: function (res) {
+                   if(res.code === 1000)
+                   {
+                        eleResultDuration.innerHTML = "搜索耗时"+res.duration+"秒";
+                       let data = res.data;
+                       // 清空结果区域
+                        resultsGrid.innerHTML = '';
+
+
+                       // 排序结果
+                        //sortResults(filteredResults);
+
+                        // 显示结果
+                        f_showData(data);
+                   }
+                   else
+                   {
+                       myAlert(res.msg,"error");
+                   }
+               }
+            });
+    }
+    function f_loadMore() {
+        let curCount = parseInt(eleResultCount.textContent);
+        if(curCount <=0){
+            return
+        }
+        const keyword = eleSearchInput.value.toLowerCase().trim();
+        curPage++;
+
+        //const startIndex = curPage * curPageSize;
+        //const endIndex = startIndex + curPageSize;
+        //const moreResults = currentResults.slice(startIndex, endIndex);
+
+        $.ajax({
+               url: '/media/openIndex',
+               type: "get",
+               async: true,
+               data: {"p":curPage,"ps":curPageSize,"search_text":keyword},
+               dataType: "json",
+               timeout: 0,
+               error: function () {
+                   myAlert("网络异常，请确定网络正常！","error");
+               },
+               success: function (res) {
+                   if(res.code === 1000)
+                   {
+                         eleResultDuration.innerHTML = "搜索耗时"+res.duration+"秒";
+                       let data = res.data;
+                       if (data.length > 0) {
+                            f_showData(data);
+                       }else{
+                             myAlert("无更多数据","error");
+                       }
+                   }
+                   else
+                   {
+                       myAlert(res.msg,"error");
+                   }
+               }
+            });
+
+    }
+
+
+    // 打开图片查看器
+    function f_openImageViewer(item) {
+        viewerImage.src = item.media_url;
+        viewerTitle.textContent = item.title;
+        viewerDescription.textContent = item.summary;
+        viewerTime.textContent = item.last_update_time;
+        viewerLocation.textContent = item.location;
+
+        // 显示查看器
+        imageViewer.classList.add('active');
+
+        // 防止页面滚动
+        document.body.style.overflow = 'hidden';
+    }
+
+    $(function() {
+        // 搜索按钮点击
+        eleSearchBtn.addEventListener('click', f_search);
+
+        // 回车键搜索
+        eleSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                f_search();
+            }
+        });
+
+        // 加载更多按钮点击
+        loadMoreBtn.addEventListener('click', f_loadMore);
+
+        // 关闭图片查看器
+        closeBtn.addEventListener('click', () => {
+            imageViewer.classList.remove('active');
+            document.body.style.overflow = 'auto'; // 恢复滚动
+        });
+
+        // 点击查看器背景关闭
+        imageViewer.addEventListener('click', (e) => {
+            if (e.target === imageViewer) {
+                imageViewer.classList.remove('active');
+                document.body.style.overflow = 'auto'; // 恢复滚动
+            }
+        });
+
+        // 点击提示标签
+        tipItems.forEach(item => {
+            item.addEventListener('click', () => {
+                eleSearchInput.value = item.textContent;
+                f_search();
+            });
+        });
+
+
+        // 初始显示空状态
+        resultsGrid.innerHTML = `
+            <div class="xc_empty-state">
+                <svg class="xc_empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 12H9.01M12 12H12.01M15 12H15.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <p>请输入关键词开始搜索</p>
+            </div>
+        `;
+    });
+
+</script>
+
+{% endblock javascripts %}
+

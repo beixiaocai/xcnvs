@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义标签管理系统</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+
+        .xclabel_container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .xclabel_header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .xclabel_title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .xclabel_subtitle {
+            font-size: 16px;
+            color: #7f8c8d;
+            font-weight: 400;
+        }
+
+        /* 标签显示区域 */
+        .xclabel_tags-container {
+            min-height: 120px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px dashed #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .xclabel_no-tags {
+            color: #95a5a6;
+            font-style: italic;
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* 单个标签样式 */
+        .xclabel_tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            animation: xclabel_fadeIn 0.3s ease;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        /* 标签选中效果 */
+        .xclabel_tag-selected {
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            z-index: 10;
+        }
+
+        .xclabel_tag-text {
+            margin-right: 8px;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .xclabel_tag-remove {
+            background: rgba(0, 0, 0, 0.2);
+            border: none;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .xclabel_tag-remove:hover {
+            background: rgba(0, 0, 0, 0.3);
+            transform: scale(1.1);
+        }
+
+        /* 添加标签表单 */
+        .xclabel_form {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .xclabel_form-title {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .xclabel_form-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .xclabel_input-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .xclabel_label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #34495e;
+            font-weight: 500;
+        }
+
+        .xclabel_input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.3s ease;
+        }
+
+        .xclabel_input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .xclabel_color-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+
+        .xclabel_button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        }
+
+        .xclabel_button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        /* 动画效果 */
+        @keyframes xclabel_fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .xclabel_container {
+                margin: 20px;
+                padding: 20px;
+            }
+
+            .xclabel_form-group {
+                flex-direction: column;
+            }
+
+            .xclabel_input-group {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="xclabel_container">
+        <div class="xclabel_header">
+            <h1 class="xclabel_title">自定义标签管理系统</h1>
+            <p class="xclabel_subtitle">添加、自定义和管理您的标签</p>
+        </div>
+
+        <div class="xclabel_tags-container" id="xclabel_tagsContainer">
+            <div class="xclabel_no-tags" id="xclabel_noTags">暂无标签，请添加新标签</div>
+        </div>
+
+        <div class="xclabel_form">
+            <h2 class="xclabel_form-title">添加新标签</h2>
+            <div class="xclabel_form-group">
+                <div class="xclabel_input-group">
+                    <label class="xclabel_label" for="xclabel_tagText">标签名称</label>
+                    <input
+                        type="text"
+                        id="xclabel_tagText"
+                        class="xclabel_input"
+                        placeholder="输入标签名称"
+                        maxlength="20"
+                    >
+                </div>
+
+                <div class="xclabel_input-group">
+                    <label class="xclabel_label" for="xclabel_tagColor">标签颜色</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input
+                            type="color"
+                            id="xclabel_tagColor"
+                            class="xclabel_input"
+                            value="#3498db"
+                            style="padding: 3px; height: 40px;"
+                        >
+                        <div
+                            id="xclabel_colorPreview"
+                            class="xclabel_color-preview"
+                            style="background-color: #3498db;"
+                        ></div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="xclabel_addButton" class="xclabel_button">添加标签</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const tagsContainer = document.getElementById('xclabel_tagsContainer');
+            const noTagsMessage = document.getElementById('xclabel_noTags');
+            const tagTextInput = document.getElementById('xclabel_tagText');
+            const tagColorInput = document.getElementById('xclabel_tagColor');
+            const colorPreview = document.getElementById('xclabel_colorPreview');
+            const addButton = document.getElementById('xclabel_addButton');
+
+            // 存储标签的数组
+            let tags = [];
+            // 当前选中的标签ID
+            let selectedTagId = null;
+
+            // 更新颜色预览
+            tagColorInput.addEventListener('input', function() {
+                colorPreview.style.backgroundColor = this.value;
+            });
+
+            // 添加标签功能
+            addButton.addEventListener('click', function() {
+                const text = tagTextInput.value.trim();
+                const color = tagColorInput.value;
+
+                if (!text) {
+                    alert('请输入标签名称');
+                    return;
+                }
+
+                // 创建新标签对象
+                const newTag = {
+                    id: Date.now(),
+                    text: text,
+                    color: color
+                };
+
+                // 添加到数组
+                tags.push(newTag);
+
+                // 重新渲染标签
+                renderTags();
+
+                // 清空输入框
+                tagTextInput.value = '';
+                tagTextInput.focus();
+            });
+
+            // 删除标签功能
+            function removeTag(id) {
+                tags = tags.filter(tag => tag.id !== id);
+
+                // 如果删除的是当前选中的标签，清除选中状态
+                if (selectedTagId === id) {
+                    selectedTagId = null;
+                }
+
+                renderTags();
+            }
+
+            // 选择标签功能
+            function selectTag(id) {
+                // 如果点击的是已选中的标签，则取消选中
+                if (selectedTagId === id) {
+                    selectedTagId = null;
+                } else {
+                    // 否则选中新标签
+                    selectedTagId = id;
+                }
+
+                renderTags();
+            }
+
+            // 渲染所有标签
+            function renderTags() {
+                // 清空容器
+                tagsContainer.innerHTML = '';
+
+                // 如果没有标签，显示提示信息
+                if (tags.length === 0) {
+                    tagsContainer.appendChild(noTagsMessage);
+                    noTagsMessage.style.display = 'block';
+                    return;
+                }
+
+                // 隐藏提示信息
+                noTagsMessage.style.display = 'none';
+
+                // 渲染每个标签
+                tags.forEach(tag => {
+                    const tagElement = document.createElement('div');
+                    tagElement.className = 'xclabel_tag';
+                    if (tag.id === selectedTagId) {
+                        tagElement.classList.add('xclabel_tag-selected');
+                    }
+                    tagElement.style.backgroundColor = tag.color;
+
+                    tagElement.innerHTML = `
+                        <span class="xclabel_tag-text">${tag.text}</span>
+                        <button class="xclabel_tag-remove" data-id="${tag.id}">×</button>
+                    `;
+
+                    tagsContainer.appendChild(tagElement);
+
+                    // 添加删除事件
+                    const removeButton = tagElement.querySelector('.xclabel_tag-remove');
+                    removeButton.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                        const id = parseInt(this.getAttribute('data-id'));
+                        removeTag(id);
+                    });
+
+                    // 添加点击事件（切换选中状态）
+                    tagElement.addEventListener('click', function(event) {
+                        // 确保不是点击删除按钮
+                        if (!event.target.classList.contains('xclabel_tag-remove')) {
+                            const id = parseInt(tag.id);
+                            selectTag(id);
+                        }
+                    });
+                });
+            }
+
+            // 支持按Enter键添加标签
+            tagTextInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addButton.click();
+                }
+            });
+
+            // 初始化渲染
+            renderTags();
+        });
+    </script>
+</body>
+</html>

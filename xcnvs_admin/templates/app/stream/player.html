@@ -1,0 +1,393 @@
+{% extends "app/base_site.html" %}
+
+{% block title %} 单屏播放器 {% endblock title %}
+
+{% block stylesheets %}
+{{ block.super }}
+
+{% endblock stylesheets %}
+
+{% block content %}
+<style>
+        .xc_input_group {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .xc_input_field {
+            flex: 1;
+            padding: 8px 20px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            background-color: white;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .xc_input_field:focus {
+            outline: none;
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.2);
+            transform: translateY(-1px);
+        }
+        .xc_video_player{
+            background-color: black;
+            min-height: 500px;
+        }
+
+        .control-panel {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 40px);
+            grid-template-rows: repeat(3, 40px);
+            gap: 10px;
+        }
+        .control-panel>button {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .zoom-control {
+            margin-top: 10px;
+            margin-left: 25px;
+        }
+        .zoom-control>button {
+            width: 40px;
+            height: 40px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .snap-control {
+            margin-top: 10px;
+            margin-left: 25px;
+        }
+        .snap-control > .video_is_recording{
+            background: #f10505;
+        }
+        .snap-control>button {
+            width: 40px;
+            height: 40px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .ptz-button-gray{
+            color: #aca3a3;
+        }
+
+        .xc_protocols {
+            margin-top: 10px;
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .xc_protocols:hover {
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .xc_protocols h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: black;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .xc_protocol_list {
+            list-style-type: none;
+            padding-inline-start: 0;
+        }
+
+        .xc_protocol_item {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f4f8;
+            font-size: 14px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background-color: #f8fafc;
+            transition: all 0.2s ease;
+        }
+
+        .xc_protocol_item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .xc_protocol_item:hover {
+            background-color: #edf2f7;
+            transform: translateX(5px);
+        }
+
+        .xc_protocol_item:before {
+            content: '➤';
+            color: #4a5568;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        /* 全屏适配 */
+        @media (max-width: 768px) {
+            .xc_video_player{
+                background-color: black;
+                min-height: 300px;
+            }
+        }
+    </style>
+  <div class="right_col" role="main">
+    <div class="">
+      <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+          <div class="x_panel">
+            <div class="x_title">
+                <div class="xc_input_group">
+                    <input id="input_address" type="text" class="xc_input_field" placeholder="请输入播放地址（支持ws-fmp4/http-fmp4）">
+                    <button class="btn btn-dark" onclick="f_clickPlayStart()">
+                        播放
+                    </button>
+                    <button class="btn btn-default" onclick="f_clickPlayStop()">
+                        停止
+                    </button>
+                </div>
+
+                 <!--
+                  <ul class="nav navbar-right panel_toolbox">
+                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                    </li>
+                    <li><a class="close-link"><i class="fa fa-close"></i></a>
+                    </li>
+                  </ul>
+                  -->
+
+                  <div class="clearfix"></div>
+            </div>
+
+            <div class="x_content">
+               <div class="col-md-10 col-sm-10 col-xs-12">
+                        <div id="video_player" class="xc_video_player"></div>
+               </div>
+               <div class="col-md-2 col-sm-2 col-xs-12" >
+                          <div class="control-panel">
+                            <!-- 上 -->
+                            <button class="ptz-button" onmousedown="f_openPtz(3,250)" onmouseup="f_openPtz(0,0)" style="grid-column: 2 / 3; grid-row: 1 / 2;"><i class="fa fa-chevron-up"></i></button>
+                            <!-- 左 -->
+                            <button class="ptz-button"  onmousedown="f_openPtz(5,250)" onmouseup="f_openPtz(0,0)" style="grid-column: 1 / 2; grid-row: 2 / 3;"><i class="fa fa-chevron-left"></i></button>
+                            <!-- 中间 -->
+                            <button class="ptz-button"  style="grid-column: 2 / 3; grid-row: 2 / 3;">○</button>
+                            <!-- 右 -->
+                            <button class="ptz-button"  onmousedown="f_openPtz(1,250)" onmouseup="f_openPtz(0,0)"  style="grid-column: 3 / 4; grid-row: 2 / 3;"><i class="fa fa-chevron-right"></i></button>
+                            <!-- 下 -->
+                            <button class="ptz-button"  onmousedown="f_openPtz(7,250)" onmouseup="f_openPtz(0,0)"  style="grid-column: 2 / 3; grid-row: 3 / 4;"><i class="fa fa-chevron-down"></i></button>
+                        </div>
+                        <div style="margin-top: 20px;" class="zoom-control">
+                            <button class="ptz-button"  onmousedown="f_openPtz(9,200)" onmouseup="f_openPtz(0,0)" title="调焦">Z+</button>
+                            <button class="ptz-button"  onmousedown="f_openPtz(9,-200)" onmouseup="f_openPtz(0,0)"  title="调焦">Z-</button>
+                        </div>
+                        <div class="zoom-control">
+                            <button class="ptz-button"  onmousedown="f_openPtz(11,200)" onmouseup="f_openPtz(0,0)"  title="聚焦">F+</button>
+                            <button class="ptz-button"  onmousedown="f_openPtz(11,-200)" onmouseup="f_openPtz(0,0)"  title="聚焦">F-</button>
+                        </div>
+                       <div class="zoom-control">
+                            <button class="ptz-button"  onmousedown="f_openPtz(10,250)" onmouseup="f_openPtz(0,0)"  title="光圈">I+</button>
+                            <button class="ptz-button"  onmousedown="f_openPtz(10,-250)" onmouseup="f_openPtz(0,0)"  title="光圈">I-</button>
+                        </div>
+
+               </div>
+
+
+              <div class="col-md-12 col-sm-12 col-xs-12">
+
+                 <div class="form-horizontal form-label-left">
+
+                 {% if stream.is_online %}
+                        <section class="xc_protocols">
+                            <h3>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                视频流支持的所有转发协议
+                            </h3>
+                            <ul class="xc_protocol_list">
+                                <li class="xc_protocol_item">{{ stream.wsMp4Url }}</li>
+                                <li class="xc_protocol_item">{{ stream.httpMp4Url }}</li>
+                                <li class="xc_protocol_item">{{ stream.rtspUrl }}</li>
+                            </ul>
+                        </section>
+                  {% endif %}
+                  </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block javascripts %}
+  {{ block.super }}
+<script src="/static/lib/easyPlayer/js/easyplayer-pro.js?v=2"></script>
+<script>
+    let mNodeCode = "{{ info.node_code }}";
+    let mStreamPullStreamType = 0;
+    let mStreamIsOnline = 0;
+    let eleInputAddress= $("#input_address");
+    let eleVideoPlayer = document.querySelector('#video_player');
+    let ePlayer = null;
+
+    function f_createEPlayer() {
+        ePlayer = new EasyPlayerPro({
+            container: eleVideoPlayer,
+            videoBuffer: 0.1, // 缓存时长
+            videoBufferDelay: Number(3), // 1000s 达到延迟重播(s)
+            decoder: '/static/lib/easyPlayer/js/decoder-pro.js',
+            isResize: true,
+            loadingText: "加载中",
+            debug: false,
+            debugLevel: "debug",
+            useMSE: true,
+            useSIMD: false,
+            useWCS: true,
+            hasAudio: true,
+            websocket1006ErrorReplay: true,
+            networkDelayTimeoutReplay: true,
+            useMThreading: true,
+            showBandwidth: true, // 显示网速
+            showPerformance: true, // 显示性能
+            operateBtns: {
+                fullscreen: true,
+                screenshot: true,
+                play: true,
+                audio: true,
+                ptz: false,
+                quality: false,
+                performance: true,
+                screenshotFn: f_screenshotFn,
+            },
+            background: "/static/images/player_poster.jpg",
+            timeout: 10,
+            qualityConfig: ['普清', '高清', '超清'],
+            forceNoOffscreen: true,
+            isNotMute: false,
+            heartTimeout: Number(7),//超出时间无数据重连(s)
+            ptzClickType: 'mouseDownAndUp',
+            ptzZoomShow: true,
+            ptzMoreArrowShow: true,
+            ptzApertureShow: true,
+            ptzFocusShow: true,
+            pauseAndNextPlayUseLastFrameShow: true,
+            heartTimeoutReplayUseLastFrameShow: true,
+            replayUseLastFrameShow: true, // 重播使用上一帧显示
+            fullscreenWatermarkConfig: {
+                text: "", //水印
+            }
+        });
+    }
+    const f_screenshotFn = () => {
+        if (ePlayer) {
+            ePlayer.screenshotWatermark({
+                text: {
+                    content: ``,//水印
+                    fontSize: '46',
+                    color: 'rgba(100,100,100,.6)',
+                },
+                opacity: 0.8,
+                right: 20,
+                top: 50,
+            });
+        }
+    };
+    function f_playStart(video_url) {
+        if(video_url === "" || typeof video_url === "undefined"){
+            myAlert("请输入播放地址（支持ws-fmp4/http-fmp4）！","error");
+            return false;
+        }
+        if(!video_url.endsWith(".mp4")){
+            myAlert("视频流地址格式不正确！","error");
+            return false;
+        }
+        if(video_url.startsWith("ws://") || video_url.startsWith("http://")){
+            if (ePlayer) {
+                ePlayer.destroy().then(() => {
+                    f_createEPlayer();
+                    ePlayer.play(video_url);
+                });
+            } else {
+                f_createEPlayer();
+                ePlayer.play(video_url);
+            }
+        }else{
+             myAlert("视频流地址格式不正确！","error");
+             return false;
+        }
+    }
+
+    function f_playStop() {
+        if(ePlayer){
+            //ePlayer.pause();
+            ePlayer.destroy();
+        }
+    }
+
+    function f_clickPlayStart() {
+        let video_url = eleInputAddress.val().trim();
+        f_playStart(video_url);
+    }
+	function f_clickPlayStop() {
+        f_playStop();
+    }
+    function f_openPtz(ptzType,val){
+        if(mStreamPullStreamType === 21){
+
+        }else {
+            return
+        }
+
+        $.ajax({
+           url: "/stream/openPtz",
+           type: "post",
+           async: true,
+           data: {"code":mStreamCode,"ptzType":ptzType,"val":val},
+           dataType: "json",
+           timeout: 0,
+           error: function () {
+               myAlert("网络异常，请确定网络正常！","error");
+           },
+           success: function (res) {
+               if(1000 === res.code){
+                   //myAlert(res.msg,"success");
+               }else{
+                    //myAlert(res.msg,"error");
+               }
+           }
+        });
+    }
+
+    $(function() {
+        if(mStreamPullStreamType === 21){
+            //gb28181的设备
+        }else{
+            //非gb28181的设备
+            $(".ptz-button").addClass("ptz-button-gray");
+        }
+        let wsMp4Url = "{{ info.wsMp4Url }}";
+
+        eleInputAddress.val(wsMp4Url);
+        f_playStart(wsMp4Url);
+
+    });
+</script>
+
+{% endblock javascripts %}

@@ -1,0 +1,103 @@
+<div class="left_col scroll-view">
+  <div class="navbar nav_title" style="border: 0;">
+    <a href="/" class="site_title"> <span><i class="fa fa-laptop"></i>{{ settings.name }}</span></a>
+  </div>
+
+  <div class="clearfix"></div>
+
+  <!-- menu profile quick info -->
+  <div class="profile clearfix">
+    <div class="profile_pic">
+      <img src="{{ settings.logo_url }}?1001" alt="..." class="img-circle profile_img">
+    </div>
+    <div class="profile_info">
+      <span>{{ settings.welcome }},</span>
+      <h2>{{request.session.user.username }}</h2>
+    </div>
+  </div>
+  <!-- /menu profile quick info -->
+
+  <br />
+
+  <!-- sidebar menu -->
+  <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+    <div class="menu_section">
+      <h3>菜单</h3>
+      <ul class="nav side-menu">
+
+          <li ><a><i class="fa fa-home"></i> 主页 <span class="fa fa-chevron-down"></span></a>
+              <ul class="nav child_menu">
+                 <li><a href="/">控制面板</a></li>
+                 <!--<li><a href="/dashboard">大屏管理</a></li>-->
+              </ul>
+          </li>
+          <li ><a><i class="fa fa-train"></i> 标注训练 <span class="fa fa-chevron-down"></span></a>
+              <ul class="nav child_menu">
+                  <li><a href="/labelTask/index">标注任务管理</a></li>
+                  <li><a href="/labelTask/add">添加标注任务</a></li>
+                  <li><a href="/labelTask/edit">编辑标注任务</a></li>
+                  <li><a href="/labelTask/sample">标注工具</a></li>
+
+                  <li><a href="/labeltkTrain/index">训练任务管理</a></li>
+                  <li><a href="/labeltkTrain/add">添加训练任务</a></li>
+                  <li><a href="/labeltkTrain/train">训练工具</a></li>
+
+              </ul>
+           </li>
+          <li><a><i class="fa fa-fax"></i> 文搜视频 <span class="fa fa-chevron-down"></span></a>
+              <ul class="nav child_menu">
+                <li><a href="/media/index">文搜视频</a></li>
+              </ul>
+           </li>
+
+           <li><a><i class="fa fa-database"></i> 节点管理 <span class="fa fa-chevron-down"></span></a>
+              <ul class="nav child_menu">
+                  <li><a href="/node/index">节点管理</a></li>
+                  <li><a href="/node/add">添加节点</a></li>
+                  <li><a href="/node/edit">编辑节点</a></li>
+              </ul>
+           </li>
+
+          <li><a><i class="fa fa-bullhorn"></i> 报警管理 <span class="fa fa-chevron-down"></span></a>
+              <ul class="nav child_menu">
+                  <li><a href="/alarm/index">报警管理</a></li>
+                  <li><a href="/alarm/edit">报警详情</a></li>
+              </ul>
+           </li>
+
+            <li><a><i class="fa fa-video-camera"></i> 视频管理 <span class="fa fa-chevron-down"></span></a>
+              <ul class="nav child_menu">
+                  <li><a href="/stream/index">视频管理</a></li>
+                   <li><a href="/stream/player">单屏播放器</a></li>
+              </ul>
+           </li>
+
+            <li><a><i class="fa fa-cube"></i> 布控管理 <span class="fa fa-chevron-down"></span></a>
+              <ul class="nav child_menu">
+                <li><a href="/control/index">布控管理</a></li>
+                <li><a href="/control/add">添加布控</a></li>
+                <li><a href="/control/edit">编辑布控</a></li>
+              </ul>
+           </li>
+
+          <li><a><i class="fa fa-user"></i> 用户管理 <span class="fa fa-chevron-down"></span></a>
+              <ul class="nav child_menu">
+                  <li><a href="/user/index">用户管理</a></li>
+                  <li><a href="/user/add">添加用户</a></li>
+                  <li><a href="/user/edit">编辑用户</a></li>
+              </ul>
+           </li>
+
+
+      </ul>
+    </div>
+
+  </div>
+  <!-- /sidebar menu -->
+
+  <!-- /menu footer buttons -->
+  <div class="sidebar-footer hidden-small" style="height: 40px;">
+
+  </div>
+  <!-- /menu footer buttons -->
+</div>

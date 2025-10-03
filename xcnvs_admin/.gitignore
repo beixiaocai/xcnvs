@@ -1,0 +1,10 @@
+﻿# clion
+.idea/
+
+# vs
+.vs
+venv*
+__pycache__
+
+
+

@@ -1,0 +1,1189 @@
+{% extends "app/base_site.html" %}
+
+{% block title %} 标注工具 {% endblock title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+
+    <style>
+        :root {
+            --xclabel-primary: #3498db;
+            --xclabel-dark: #2c3e50;
+            --xclabel-light: #ecf0f1;
+            --xclabel-success: #2ecc71;
+            --xclabel-danger: #e74c3c;
+            --xclabel-warning: #f39c12;
+            --xclabel-border: #bdc3c7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .xclabel_container {
+            display: flex;
+            height: 100vh;
+            /*background-color: var(--xclabel-dark);*/
+            color: var(--xclabel-light);
+            overflow: hidden;
+        }
+
+        /* 标注区域样式 */
+        .xclabel_annotation-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(245,245,245,0.3);
+            overflow: hidden;
+        }
+
+        .xclabel_image-container {
+            position: relative;
+            display: inline-block;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .xclabel_target-image {
+            display: block;
+            max-width: 100%;
+            max-height: 80vh;
+            user-select: none;
+        }
+
+        .xclabel_canvas-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* 引导线样式 */
+        .xclabel_guide-line {
+            position: absolute;
+            background-color: rgba(52, 152, 219, 0.7);
+            z-index: 10;
+        }
+
+        .xclabel_guide-line-horizontal {
+            height: 1px;
+            width: 100%;
+            transform: translateY(-0.5px);
+        }
+
+        .xclabel_guide-line-vertical {
+            width: 1px;
+            height: 100%;
+            transform: translateX(-0.5px);
+        }
+
+        /* 矩形框样式 */
+        .xclabel_rect {
+            position: absolute;
+            border: 2px solid var(--xclabel-primary);
+            background-color: rgba(52, 152, 219, 0.2);
+            cursor: move;
+            z-index: 20;
+        }
+
+        .xclabel_rect.selected {
+            border-color: var(--xclabel-success);
+            background-color: rgba(46, 204, 113, 0.3);
+            z-index: 30;
+        }
+
+        .xclabel_rect-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: var(--xclabel-primary);
+            border-radius: 50%;
+            z-index: 40;
+        }
+
+        .xclabel_rect-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+        .xclabel_rect-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+        .xclabel_rect-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+        .xclabel_rect-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+
+        .xclabel_rect-label {
+            position: absolute;
+            top: -25px;
+            left: 0;
+            background-color: var(--xclabel-primary);
+            color: white;
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 3px;
+            white-space: nowrap;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 控制面板样式 */
+        .xclabel_control-panel {
+            width: 300px;
+            background-color: #34495e;
+            padding: 10px 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .xclabel_panel-section {
+            margin-bottom: 10px;
+        }
+
+        .xclabel_panel-title {
+            font-size: 16px;
+            /*margin-bottom: 15px;*/
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--xclabel-border);
+            /*color: var(--xclabel-primary);*/
+        }
+
+        .xclabel_button {
+            background-color: var(--xclabel-light);
+            color: black;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .xclabel_button:hover {
+            background-color: #2980b9;
+        }
+
+        .xclabel_button-danger {
+            background-color: var(--xclabel-danger);
+        }
+
+        .xclabel_button-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .xclabel_button-success {
+            background-color: var(--xclabel-success);
+        }
+
+        .xclabel_button-success:hover {
+            background-color: #27ae60;
+        }
+
+        .xclabel_form-group {
+            margin-bottom: 15px;
+        }
+
+        .xclabel_form_label_title {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .xclabel_form-input {
+             font-size: 13px;
+            width: 60px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid var(--xclabel-border);
+            background-color: #2c3e50;
+            color: var(--xclabel-light);
+        }
+
+        .xclabel_form-input:focus {
+            outline: none;
+            border-color: var(--xclabel-primary);
+        }
+
+        .xclabel_rect-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--xclabel-border);
+            border-radius: 4px;
+            background-color: #2c3e50;
+        }
+
+        .xclabel_rect-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--xclabel-border);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .xclabel_rect-item:last-child {
+            border-bottom: none;
+        }
+
+        .xclabel_rect-item:hover {
+            background-color: #3a506b;
+        }
+
+        .xclabel_rect-item.selected {
+            background-color: rgba(46, 204, 113, 0.2);
+        }
+
+        .xclabel_rect-category {
+            font-weight: bold;
+        }
+
+        .xclabel_rect-dimensions {
+            font-size: 12px;
+            color: var(--xclabel-border);
+        }
+
+        .xclabel_status-bar {
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid var(--xclabel-border);
+            font-size: 14px;
+            color: var(--xclabel-border);
+        }
+
+        .xclabel_image-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .xclabel_tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 100;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+    </style>
+
+    <style>
+        .xctag_container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 1px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            font-size: 13px;
+        }
+        /* 标签显示区域 */
+        .xctag_tags-container {
+            margin-top: 6px;
+            min-height: 30px;
+            background: #f8f9fa;
+            border-radius: 3px;
+            padding: 2px;
+            margin-bottom: 5px;
+            border: 1px dashed #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .xctag_no-tags {
+            color: #95a5a6;
+            font-style: italic;
+            width: 100%;
+            text-align: center;
+            padding: 2px;
+        }
+
+        /* 单个标签样式 */
+        .xctag_tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 4px;
+            border-radius: 2px;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            animation: xctag_fadeIn 0.3s ease;
+            position: relative;
+        }
+        /* 标签选中效果 */
+        .xclabel_tag-selected {
+            box-shadow: 0 0 0 3px rgb(21, 68, 82), 0 4px 10px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            z-index: 10;
+        }
+
+        .xctag_tag-text {
+            margin-right: 2px;
+            font-size: 13px;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .xctag_tag-remove {
+            background: rgba(0, 0, 0, 0.2);
+            border: none;
+            color: white;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .xctag_tag-remove:hover {
+            background: rgba(0, 0, 0, 0.3);
+            transform: scale(1.1);
+        }
+
+        /* 添加标签表单 */
+        .xctag_form {
+            background: #f8f9fa;
+            border-radius: 3px;
+            padding: 3px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .xctag_form-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 2px;
+        }
+
+        .xctag_input-group {
+            flex: 1;
+            min-width: 60px;
+        }
+
+        .xctag_label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: 500;
+        }
+
+        .xctag_input {
+            width: 100%;
+            padding: 3px 5px;
+            color: #101010;
+            border: 1px solid #ddd;
+           border-radius: 4px;
+            transition: border 0.3s ease;
+        }
+
+        .xctag_input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .xctag_button {
+            background: #343a3b;
+            color: #ffffff;
+            border: none;
+            margin-top: 5px;
+            padding: 3px 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        }
+
+        .xctag_button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        /* 动画效果 */
+        @keyframes xctag_fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .xctag_container {
+                margin: 2px;
+                padding: 2px;
+            }
+
+            .xctag_form-group {
+                flex-direction: column;
+            }
+
+            .xctag_input-group {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock stylesheets %}
+
+{% block content %}
+
+  <div class="right_col" role="main">
+    <div class="">
+      <div class="row">
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="x_panel">
+                <!-- c start -->
+    <div class="xclabel_container">
+        <!-- 标注区域 -->
+        <div class="xclabel_annotation-area">
+            <div class="xclabel_image-container">
+                <img id="xclabel_target-image" class="xclabel_target-image" src="/static/images/logo.png" alt="标注目标">
+                <canvas id="xclabel_canvas-overlay" class="xclabel_canvas-overlay"></canvas>
+            </div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="xclabel_control-panel">
+            <!-- 图片选择 -->
+            <div class="xclabel_panel-section">
+                <h3 class="xclabel_panel-title">标注工具</h3>
+                 <div class="xclabel_image-selector">
+                     <button id="xclabel_toggle-guides" class="xclabel_button">隐藏引导线</button>
+                </div>
+                <div class="xclabel_image-selector">
+                    <button id="xclabel_prev-image" class="xclabel_button">上一张</button>
+                    <button id="xclabel_next-image" class="xclabel_button">下一张</button>
+                    <span style="margin-top: 5px;font-size: 14px;" id="xclabel_statistics">0/0</span>
+                </div>
+
+                <div>
+                    <button id="xclabel_delete_label" class="xclabel_button">删除标注</button>
+                    <button id="xclabel_clearall" class="xclabel_button">清除标注</button>
+                    <button id="xclabel_save" class="xclabel_button">保存</button>
+                </div>
+                <div class="xclabel_form-group">
+                    <label for="xclabel_xctag_container" class="xclabel_form_label_title">标签管理</label>
+                    <!-- xctag_container start -->
+
+                    <div id="xclabel_xctag_container" class="xctag_container">
+                        <div class="xctag_tags-container" id="xctag_tags_container">
+                            <div class="xctag_no-tags" id="xctag_noTags">暂无标签，请添加新标签</div>
+                        </div>
+
+                        <div class="xctag_form">
+                            <div class="xctag_form-group">
+                                <div class="xctag_input-group">
+                                    <label class="xctag_label" for="xctag_tagText">标签名称</label>
+                                    <input type="text" id="xctag_tagText" class="xctag_input" placeholder="请输入标签名称" maxlength="30">
+                                </div>
+
+                                <div class="xctag_input-group">
+                                    <label class="xctag_label" for="xctag_tagColor">标签颜色</label>
+                                    <div style="display: flex; gap: 10px;">
+                                        <input type="color" id="xctag_tagColor" class="xctag_input" value="#EE0000" style="padding: 5px; height: 30px;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button id="xctag_addButton" class="xctag_button">添加</button>
+                        </div>
+                    </div>
+                    <!-- xctag_container end -->
+
+
+                </div>
+            </div>
+
+            <!-- 标注列表 -->
+            <div class="xclabel_panel-section">
+                <h3 class="xclabel_panel-title">标注列表</h3>
+                <ul id="xclabel_rect-list" class="xclabel_rect-list">
+                    <!-- 标注项将通过JS动态添加 -->
+                </ul>
+            </div>
+
+            <!-- 状态栏 -->
+            <div class="xclabel_status-bar">
+                <div>状态: <span id="xclabel_status">就绪</span></div>
+                <div>标注数量: <span id="xclabel_rect-count">0</span></div>
+            </div>
+        </div>
+    </div>
+         <!-- c end -->
+
+            </div>
+          </div>
+      </div>
+
+    </div>
+  </div>
+
+{% endblock content %}
+
+{% block javascripts %}
+  {{ block.super }}
+    <script>
+        let mTaskCode = "{{ task_code }}";
+        let mSampleCode = "{{ sample_code }}";
+        let storageDir_www = "{{ storageDir_www }}";
+        let mStatistics = {}
+        // 全局变量
+        const xclabel_var = {
+            tags: [], //存储所有标签
+            curTagId: null,//当前选中的标签ID
+            data: [], // 存储所有绘制的目标
+            curRect: null, // 当前正在绘制或选中的目标
+            isDrawing: false, // 是否正在绘制新矩形
+            isDragging: false, // 是否正在拖动矩形
+            isResizing: false, // 是否正在调整矩形大小
+            resizeDirection: null, // 调整大小的方向
+            showGuides: true, // 是否显示引导线
+            mouseX: 0, // 鼠标X坐标
+            mouseY: 0, // 鼠标Y坐标
+            startX: 0, // 绘制起始X坐标
+            startY: 0 // 绘制起始Y坐标
+        };
+
+        // DOM元素
+        const xclabel_dom = {
+            canvas: document.getElementById('xclabel_canvas-overlay'),
+            ctx: null,
+            image: document.getElementById('xclabel_target-image'),
+            imageContainer: document.querySelector('.xclabel_image-container'),
+            rectList: document.getElementById('xclabel_rect-list'),
+            deleteLabelBtn: document.getElementById('xclabel_delete_label'),
+            clearAllBtn: document.getElementById('xclabel_clearall'),
+            eleSaveBtn: document.getElementById('xclabel_save'),
+            toggleGuidesBtn: document.getElementById('xclabel_toggle-guides'),
+            prevImageBtn: document.getElementById('xclabel_prev-image'),
+            nextImageBtn: document.getElementById('xclabel_next-image'),
+            statisticsSpan: document.getElementById('xclabel_statistics'),
+            status: document.getElementById('xclabel_status'),
+            rectCount: document.getElementById('xclabel_rect-count'),
+            eleTagsContainer: document.getElementById('xctag_tags_container'),
+            eleNoTagsMessage: document.getElementById('xctag_noTags'),
+            eleTagTextInput: document.getElementById('xctag_tagText'),
+            eleTagColorInput: document.getElementById('xctag_tagColor'),
+            eleTagAddBtn: document.getElementById('xctag_addButton')
+        };
+
+        // 鼠标按下事件处理
+        function f_handleMouseDown(e) {
+            const rect = xclabel_dom.image.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            xclabel_var.mouseX = x;
+            xclabel_var.mouseY = y;
+
+            // 检查是否点击了已有矩形的调整手柄
+            const handle = f_getResizeHandleAt(x, y);
+            if (handle) {
+                xclabel_var.isResizing = true;
+                xclabel_var.resizeDirection = handle;
+                xclabel_var.curRect = handle.rect;
+                f_selectRect(handle.rect);
+                return;
+            }
+
+            // 检查是否点击了已有矩形
+            const clickedRect = f_getRectAt(x, y);
+            if (clickedRect) {
+                xclabel_var.isDragging = true;
+                xclabel_var.curRect = clickedRect;
+                f_selectRect(clickedRect);
+                xclabel_var.startX = x - clickedRect.x;
+                xclabel_var.startY = y - clickedRect.y;
+                return;
+            }
+
+            // 开始绘制新矩形
+            xclabel_var.isDrawing = true;
+            xclabel_var.startX = x;
+            xclabel_var.startY = y;
+            
+            let canvasWidth = xclabel_dom.canvas.width;
+            let canvasHeight = xclabel_dom.canvas.height;
+            let imageWidth = xclabel_dom.image.width;
+            let imageHeight = xclabel_dom.image.height;
+
+            // 创建新矩形
+            let curTag = f_getCurTag();
+            if(curTag){
+
+            }else{
+                alert("暂无标签")
+                return;
+            }
+            xclabel_var.curRect = {
+                id: Date.now(),
+                x: x,
+                y: y,
+                width: 0,
+                height: 0,
+                category: curTag.category,           //标签名称
+                categoryColor: curTag.categoryColor, //标签颜色
+                imageWidth:imageWidth,
+                imageHeight:imageHeight,
+                canvasWidth:canvasWidth,
+                canvasHeight:canvasHeight
+            };
+            xclabel_var.data.push(xclabel_var.curRect);
+            f_selectRect(xclabel_var.curRect);
+
+            f_updateStatus('正在绘制新标注');
+        }
+
+        // 鼠标移动事件处理
+        function f_handleMouseMove(e) {
+            console.log("f_handleMouseMove()")
+            const rect = xclabel_dom.image.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            xclabel_var.mouseX = x;
+            xclabel_var.mouseY = y;
+
+            // 更新引导线位置
+            if (xclabel_var.showGuides) {
+                f_renderData();
+            }
+
+            // 处理矩形调整
+            if (xclabel_var.isResizing && xclabel_var.curRect) {
+                const rect = xclabel_var.curRect;
+                switch (xclabel_var.resizeDirection.direction) {
+                    case 'nw':
+                        rect.width += rect.x - x;
+                        rect.height += rect.y - y;
+                        rect.x = x;
+                        rect.y = y;
+                        break;
+                    case 'ne':
+                        rect.width = x - rect.x;
+                        rect.height += rect.y - y;
+                        rect.y = y;
+                        break;
+                    case 'sw':
+                        rect.width += rect.x - x;
+                        rect.height = y - rect.y;
+                        rect.x = x;
+                        break;
+                    case 'se':
+                        rect.width = x - rect.x;
+                        rect.height = y - rect.y;
+                        break;
+                }
+
+                // 确保宽度和高度为正数
+                if (rect.width < 0) {
+                    rect.x += rect.width;
+                    rect.width = -rect.width;
+                }
+                if (rect.height < 0) {
+                    rect.y += rect.height;
+                    rect.height = -rect.height;
+                }
+
+                f_updateData();
+                f_renderData();
+                return;
+            }
+
+            // 处理矩形拖动
+            if (xclabel_var.isDragging && xclabel_var.curRect) {
+                xclabel_var.curRect.x = x - xclabel_var.startX;
+                xclabel_var.curRect.y = y - xclabel_var.startY;
+                f_updateData();
+                f_renderData();
+                return;
+            }
+
+            // 处理新矩形绘制
+            if (xclabel_var.isDrawing && xclabel_var.curRect) {
+                const startX = xclabel_var.startX;
+                const startY = xclabel_var.startY;
+
+                xclabel_var.curRect.x = Math.min(startX, x);
+                xclabel_var.curRect.y = Math.min(startY, y);
+                xclabel_var.curRect.width = Math.abs(x - startX);
+                xclabel_var.curRect.height = Math.abs(y - startY);
+
+                f_updateData();
+                f_renderData();
+            }
+        }
+
+        // 鼠标释放事件处理
+        function f_handleMouseUp() {
+            if (xclabel_var.isDrawing) {
+                xclabel_var.isDrawing = false;
+                f_updateStatus('标注完成');
+            }
+
+            if (xclabel_var.isDragging) {
+                xclabel_var.isDragging = false;
+                f_updateStatus('移动完成');
+            }
+
+            if (xclabel_var.isResizing) {
+                xclabel_var.isResizing = false;
+                xclabel_var.resizeDirection = null;
+                f_updateStatus('调整完成');
+            }
+        }
+
+        // 鼠标离开事件处理
+        function f_handleMouseLeave() {
+            f_handleMouseUp();
+        }
+
+        // 切换引导线显示
+        function f_toggleGuides() {
+            xclabel_var.showGuides = !xclabel_var.showGuides;
+            xclabel_dom.toggleGuidesBtn.textContent =
+                xclabel_var.showGuides ? '隐藏引导线' : '显示引导线';
+            f_renderData();
+        }
+
+        function f_labeltkSample(task_code,sample_code) {
+             window.location.href = "/labelTask/sample?task_code="+task_code+"&sample_code="+sample_code
+        }
+        function f_getCurTag() {
+            let curTag = null;
+            for (let i = 0; i < xclabel_var.tags.length; i++) {
+                if(xclabel_var.tags[i].id === xclabel_var.curTagId){
+                    curTag = xclabel_var.tags[i];
+                }
+            }
+            return curTag;
+        }
+        // 选择矩形
+        function f_selectRect(rect) {
+            xclabel_var.curRect = rect;
+            let curTag = f_getCurTag();
+            if(curTag){
+                xclabel_var.curRect.category = curTag.category;
+                xclabel_var.curRect.categoryColor = curTag.color;
+                f_updateData();
+                f_renderData();
+            }else{
+                alert("暂无标签")
+            }
+
+
+        }
+
+        // 更新状态
+        function f_updateStatus(message) {
+            xclabel_dom.status.textContent = message;
+        }
+
+        // 获取指定位置的矩形
+        function f_getRectAt(x, y) {
+            for (let i = xclabel_var.data.length - 1; i >= 0; i--) {
+                const rect = xclabel_var.data[i];
+                if (x >= rect.x && x <= rect.x + rect.width &&
+                    y >= rect.y && y <= rect.y + rect.height) {
+                    return rect;
+                }
+            }
+            return null;
+        }
+
+        // 获取指定位置的调整手柄
+        function f_getResizeHandleAt(x, y) {
+            if (!xclabel_var.curRect) return null;
+
+            const rect = xclabel_var.curRect;
+            const handles = [
+                { x: rect.x, y: rect.y, direction: 'nw' },
+                { x: rect.x + rect.width, y: rect.y, direction: 'ne' },
+                { x: rect.x, y: rect.y + rect.height, direction: 'sw' },
+                { x: rect.x + rect.width, y: rect.y + rect.height, direction: 'se' }
+            ];
+
+            const handleSize = 10;
+            for (const handle of handles) {
+                if (Math.abs(x - handle.x) <= handleSize && Math.abs(y - handle.y) <= handleSize) {
+                    return { rect: rect, direction: handle.direction };
+                }
+            }
+
+            return null;
+        }
+
+        // 更新目标框
+        function f_updateData() {
+            console.log("f_updateData()",xclabel_var.data)
+
+            xclabel_dom.rectList.innerHTML = '';
+
+            xclabel_var.data.forEach(rect => {
+                const li = document.createElement('li');
+                li.className = `xclabel_rect-item ${rect === xclabel_var.curRect ? 'selected' : ''}`;
+                li.innerHTML = `
+                    <div>
+                        <span class="xclabel_rect-category">${rect.category}</span>
+                        <span class="xclabel_rect-dimensions">(${Math.round(rect.width)}×${Math.round(rect.height)})</span>
+                    </div>
+                    <div>ID: ${rect.id}</div>
+                `;
+
+                li.addEventListener('click', () => f_selectRect(rect));
+                xclabel_dom.rectList.appendChild(li);
+            });
+
+            xclabel_dom.rectCount.textContent = xclabel_var.data.length;
+        }
+
+        // 渲染目标框
+        function f_renderData() {
+            console.log("f_renderData()")
+            console.log("xclabel_dom.image.width, xclabel_dom.image.height: ", xclabel_dom.image.width,xclabel_dom.image.height)
+            console.log("xclabel_dom.canvas.width, xclabel_dom.canvas.height: ", xclabel_dom.canvas.width,xclabel_dom.canvas.height)
+
+            // 更新Canvas尺寸以匹配图片
+            xclabel_dom.canvas.width = xclabel_dom.image.width;
+            xclabel_dom.canvas.height = xclabel_dom.image.height;
+
+            // 清除Canvas
+            xclabel_dom.ctx.clearRect(0, 0, xclabel_dom.canvas.width, xclabel_dom.canvas.height);
+
+            // 绘制引导线
+            if (xclabel_var.showGuides) {
+                xclabel_dom.ctx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
+                xclabel_dom.ctx.lineWidth = 1;
+
+                // 水平线
+                xclabel_dom.ctx.beginPath();
+                xclabel_dom.ctx.moveTo(0, xclabel_var.mouseY);
+                xclabel_dom.ctx.lineTo(xclabel_dom.canvas.width, xclabel_var.mouseY);
+                xclabel_dom.ctx.stroke();
+
+                // 垂直线
+                xclabel_dom.ctx.beginPath();
+                xclabel_dom.ctx.moveTo(xclabel_var.mouseX, 0);
+                xclabel_dom.ctx.lineTo(xclabel_var.mouseX, xclabel_dom.canvas.height);
+                xclabel_dom.ctx.stroke();
+
+                // 坐标指示
+                xclabel_dom.ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+                xclabel_dom.ctx.font = '12px Arial';
+                xclabel_dom.ctx.fillText(`X: ${Math.round(xclabel_var.mouseX)}`, xclabel_var.mouseX + 10, xclabel_var.mouseY - 10);
+                xclabel_dom.ctx.fillText(`Y: ${Math.round(xclabel_var.mouseY)}`, xclabel_var.mouseX + 10, xclabel_var.mouseY + 20);
+            }
+
+            // 绘制所有矩形
+            xclabel_var.data.forEach(rect => {
+                const isSelected = rect === xclabel_var.curRect;
+
+                // 绘制矩形
+                xclabel_dom.ctx.strokeStyle = rect.categoryColor;
+                xclabel_dom.ctx.lineWidth = isSelected ? 3 : 2;
+                xclabel_dom.ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+
+                // 绘制半透明填充
+                xclabel_dom.ctx.fillStyle = isSelected ? 'rgba(52, 152, 219, 0.4)': 'rgba(255, 255, 255, 0.3)' ;
+                xclabel_dom.ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+
+                // 绘制类别标签
+                xclabel_dom.ctx.fillStyle = isSelected ? 'rgba(255, 0, 0, 0.9)' : 'rgba(255, 0, 0, 0.7)';
+                xclabel_dom.ctx.font = '13px Arial';
+                xclabel_dom.ctx.fillText(rect.category, rect.x + 5, rect.y - 5);
+
+                // 如果是选中的矩形，绘制调整手柄
+                if (isSelected) {
+                    const handleSize = 6;
+                    const handles = [
+                        { x: rect.x, y: rect.y }, // 左上
+                        { x: rect.x + rect.width, y: rect.y }, // 右上
+                        { x: rect.x, y: rect.y + rect.height }, // 左下
+                        { x: rect.x + rect.width, y: rect.y + rect.height } // 右下
+                    ];
+
+                    handles.forEach(handle => {
+                        xclabel_dom.ctx.fillStyle = '#3498db';
+                        xclabel_dom.ctx.beginPath();
+                        xclabel_dom.ctx.arc(handle.x, handle.y, handleSize, 0, Math.PI * 2);
+                        xclabel_dom.ctx.fill();
+
+                        xclabel_dom.ctx.strokeStyle = 'white';
+                        xclabel_dom.ctx.lineWidth = 1;
+                        xclabel_dom.ctx.stroke();
+                    });
+                }
+            });
+        }
+        function f_addTag(category,color) {
+            // 创建新标签对象
+            const newTag = {
+                id: Date.now(),
+                category: category,
+                color: color
+            };
+            xclabel_var.curTagId = newTag.id;
+            // 添加到数组
+            xclabel_var.tags.push(newTag);
+
+            // 重新渲染标签
+            f_renderTags();
+        }
+        function f_removeTag(id) {
+            xclabel_var.tags = xclabel_var.tags.filter(tag => tag.id !== id);
+
+            // 如果删除的是当前选中的标签，清除选中状态
+            if (xclabel_var.curTagId === id) {
+                xclabel_var.curTagId = null;
+            }
+
+            // 重新渲染标签
+            f_renderTags();
+        }
+        function f_selectTag(id) {
+
+            if (xclabel_var.curTagId === id) {
+                // 如果点击的当前标签，则不做任何操作
+                //xclabel_var.curTagId = null;
+            } else {
+                // 选中新标签
+                xclabel_var.curTagId = id;
+                // 重新渲染标签
+                f_renderTags();
+            }
+
+        }
+        function f_renderTags() {
+            // 清空容器
+            xclabel_dom.eleTagsContainer.innerHTML = '';
+
+            // 如果没有标签，显示提示信息
+            if (xclabel_var.tags.length === 0) {
+                xclabel_dom.eleTagsContainer.appendChild(xclabel_dom.eleNoTagsMessage);
+                xclabel_dom.eleNoTagsMessage.style.display = 'block';
+                return;
+            }
+
+            // 隐藏提示信息
+            xclabel_dom.eleNoTagsMessage.style.display = 'none';
+
+            // 渲染每个标签
+            xclabel_var.tags.forEach(tag => {
+                const tagElement = document.createElement('div');
+                tagElement.className = 'xctag_tag';
+                 if (tag.id === xclabel_var.curTagId) {
+                    tagElement.classList.add('xclabel_tag-selected');
+                }
+
+                tagElement.style.backgroundColor = tag.color;
+
+                tagElement.innerHTML = `
+                    <span class="xctag_tag-text">${tag.category}</span>
+                    <button class="xctag_tag-remove" data-id="${tag.id}">×</button>
+                `;
+
+                xclabel_dom.eleTagsContainer.appendChild(tagElement);
+
+                // 添加删除事件
+                const removeButton = tagElement.querySelector('.xctag_tag-remove');
+                removeButton.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    f_removeTag(id);
+                });
+                // 添加点击事件（切换选中状态）
+                tagElement.addEventListener('click', function(event) {
+                    // 确保不是点击删除按钮
+                    if (!event.target.classList.contains('xclabel_tag-remove')) {
+                        const id = parseInt(tag.id);
+                        f_selectTag(id);
+                    }
+                });
+            });
+        }
+        function f_init() {
+            // 获取Canvas上下文
+            xclabel_dom.ctx = xclabel_dom.canvas.getContext('2d');
+
+            // 设置事件监听器
+            // 鼠标事件
+            xclabel_dom.canvas.addEventListener('mousedown', f_handleMouseDown);
+            xclabel_dom.canvas.addEventListener('mousemove', f_handleMouseMove);
+            xclabel_dom.canvas.addEventListener('mouseup', f_handleMouseUp);
+            xclabel_dom.canvas.addEventListener('mouseleave', f_handleMouseLeave);
+            // 按钮事件
+            xclabel_dom.deleteLabelBtn.addEventListener('click', function () {
+                if (xclabel_var.curRect) {
+                    const index = xclabel_var.data.indexOf(xclabel_var.curRect);
+                    if (index !== -1) {
+                        xclabel_var.data.splice(index, 1);
+                        xclabel_var.curRect = null;
+                        f_updateData();
+                        f_renderData();
+                        f_updateStatus('标注已删除');
+                    }
+                }
+            });
+            xclabel_dom.clearAllBtn.addEventListener('click', function () {
+                // if (confirm('确定要清除所有标注吗？')) {}
+                xclabel_var.data = [];
+                xclabel_var.curRect = null;
+                f_updateData();
+                f_renderData();
+                f_updateStatus('所有标注已清除');
+            });
+            xclabel_dom.eleSaveBtn.addEventListener('click', function () {
+                console.log("xclabel_var.data:",xclabel_var.data)
+                console.log("xclabel_var.tags:",xclabel_var.tags)
+                console.log("xclabel_var.curTagId:",xclabel_var.curTagId)
+
+                let annotation_content = JSON.stringify(xclabel_var.data)
+                let tags = JSON.stringify(xclabel_var.tags)
+
+                $.ajax({
+                   url: "/labeltkSample/postSaveAnnotation",
+                   type: "post",
+                   async: true,
+                   data: {
+                       "sample_code":mSampleCode,
+                       "annotation_content":annotation_content,
+                       "tags":tags
+                   },
+                   dataType: "json",
+                   timeout: 0,
+                   error: function () {
+                       myAlert("网络异常，请确定网络正常！","error");
+                   },
+                   success: function (res) {
+                       if(res.code === 1000){
+                           myAlert(res.msg,"success",200);
+                       }else{
+                           myAlert(res.msg,"error",1000);
+                       }
+                   }
+                });
+
+            });
+            xclabel_dom.toggleGuidesBtn.addEventListener('click', f_toggleGuides);
+            xclabel_dom.prevImageBtn.addEventListener('click', function () {
+                 let pre_sample_code = mStatistics["pre_sample_code"];
+                 f_labeltkSample(mTaskCode,pre_sample_code);
+            });
+            xclabel_dom.nextImageBtn.addEventListener('click', function () {
+                let next_sample_code = mStatistics["next_sample_code"];
+                 f_labeltkSample(mTaskCode,next_sample_code);
+            });
+
+            xclabel_dom.eleTagAddBtn.addEventListener('click', function() {
+                const category = xclabel_dom.eleTagTextInput.value.trim();
+                const color = xclabel_dom.eleTagColorInput.value;
+
+                if (!category) {
+                    alert('请输入标签名称');
+                    return;
+                }
+                f_addTag(category,color)
+                // 清空输入框
+                xclabel_dom.eleTagTextInput.value = '';
+                xclabel_dom.eleTagTextInput.focus();
+            });
+            xclabel_dom.eleTagTextInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                   xclabel_dom.eleTagAddBtn.click();
+                }
+            });
+
+            //标签系统end
+
+            // 更新+渲染
+            //f_updateData();
+            //f_renderData();
+
+            $.ajax({
+                   url: '/labeltkSample/getInfo',
+                   type: "get",
+                   async: true,
+                   data: {"task_code":mTaskCode,"sample_code":mSampleCode},
+                   dataType: "json",
+                   timeout: 0,
+                   error: function () {
+                       myAlert("网络异常，请确定网络正常！","error");
+                   },
+                   success: function (res) {
+                       if(res.code === 1000){
+                           mStatistics = res["statistics"]
+                           let cur_index = mStatistics["cur_index"];
+                           let total_count = mStatistics["total_count"];
+                           xclabel_dom.statisticsSpan.textContent = (cur_index+1).toString()+"/"+total_count.toString();
+
+                           try {
+                               let tags = res["tags"];
+                               xclabel_var.tags = JSON.parse(tags);
+                               f_selectTag(xclabel_var.tags[0].id)
+                           }catch (e) {
+                               console.log("当前标注任务无任何标签，添加1条默认标签")
+                               f_addTag("未命名","#EE0000")
+                           }
+
+
+                           let sample = res["sample"];
+                           let task_code = sample["task_code"]
+                           let old_filename = sample["old_filename"]
+                           let new_filename = sample["new_filename"]
+                           let imgUrl = storageDir_www + "labelTask/"+task_code+"/labeltkSample/"+new_filename;
+                           // 在实际应用中，这里会加载新图片
+                            xclabel_dom.image.src = imgUrl;
+
+                            // 清除当前标注
+                            //xclabel_var.data = [];
+                            //xclabel_var.curRect = null;
+                            //f_updateData();
+                            //f_renderData();
+
+                            // 设置加载完成和错误的回调
+                            xclabel_dom.image.onload = function() {
+                              // 恢复原始事件处理函数（如果存在）
+                                console.log("加载图片成功")
+                                let annotation_state = sample["annotation_state"]
+                                let annotation_content = sample["annotation_content"]
+                                if (annotation_state === 1){
+                                   let data = JSON.parse(annotation_content);
+                                   if(data.length > 0){
+                                        try {
+                                            xclabel_var.data = data;
+                                            f_selectRect(data[0])
+                                        }catch (e) {
+                                             console.log("解析标注数据失败：",e)
+                                        }
+                                   }
+
+                               }
+                            };
+
+                            xclabel_dom.image.onerror = function(error) {
+                                console.log("加载图片失败:",error)
+                            };
+
+                       }else{
+                            myAlert(res.msg,"error",1000);
+                       }
+                   }
+                });
+        }
+        window.addEventListener('load', f_init);
+    </script>
+
+{% endblock javascripts %}
+

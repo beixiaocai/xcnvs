@@ -1,0 +1,13 @@
+Django==5.0.4
+psutil==5.9.1
+requests==2.28.2
+xlrd==1.2.0
+openpyxl==3.1.2
+pillow==9.5.0
+pycryptodome==3.20.0
+PyMySQL==0.8.1
+psycopg2-binary==2.9.10
+pgvector==0.4.1
+numpy==1.26.2
+opencv-python==4.8.1.78
+sentence-transformers==5.1.1

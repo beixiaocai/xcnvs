@@ -1,0 +1,317 @@
+{% extends "app/base_site.html" %}
+
+{% block title %} 节点管理 {% endblock title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+<link rel="stylesheet" href="/static/lib/jquery/confirm/jquery-confirm.css" />
+    <style>
+    /*导入弹窗*/
+    input[type="file"]{
+      color: #8d2f2f;
+      font-size: 12px;
+    }
+    ::file-selector-button{
+      font-size: 12px;
+      color: #fff;
+      border-radius: 4px;
+      border: 1px solid #091f35;
+      padding: 2px 4px;
+      background-color: #091f35;
+      cursor: pointer;
+    }
+
+</style>
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+  <div class="right_col" role="main">
+    <div class="">
+      <div class="row">
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="x_panel">
+              <div class="x_title">
+               <h2>节点管理
+                         <button style="margin-left:5px;" onclick="f_openSync()" class="btn btn-default btn-sm">全量同步节点</button>
+                    <span id="top_loading" ><img class="top_loading_img" src="/static/images/load.gif" alt="loading">加载中</span>
+                    <span id="top_msg">{{top_msg}}</span>
+               </h2>
+                <div class="clearfix"></div>
+              </div>
+              <div class="x_content">
+
+                <div class="table-responsive">
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr class="headings">
+                        <th class="column-title">ID</th>
+                        <th class="column-title">序号</th>
+                        <th class="column-title">编号</th>
+                        <th class="column-title">昵称</th>
+                           <th class="column-title">节点地址</th>
+                        <th class="column-title">节点信息</th>
+                        <th class="column-title">更新时间</th>
+                        <th class="column-title no-link last"><span class="nobr">操作</span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {%  for d  in data %}
+                      <tr class="even pointer">
+
+                          <td>{{ d.id }}</td>
+                          <td>{{ d.sort }}</td>
+                          <td>{{ d.code }}</td>
+                        <td>{{ d.nickname }}</td>
+                        <td><a target="_blank" class="sun-a-label" title="前往节点地址" href="{{ d.address }}">{{ d.address }}</a></td>
+                        <td>
+                            {% if d.state == 0 %}
+                                  <span class="sun-state-error">未同步</span>
+                            {% elif d.state == 1 %}
+                                  <span class="sun-state-success">在线</span>
+                                    {% if d.version > 4 %}
+                                        {% if d.is_auth == 1 %}
+                                            <span class="sun-state-success">
+                                                {% if d.is_multi_process == 1 %}
+                                                    高级版({{ d.max_count }})路
+                                                 {% else %}
+                                                    普通版
+                                                 {% endif %}
+                                            </span>
+                                        {% else %}
+                                            <span class="sun-state-error">未授权</span>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    v{{ d.version }} {{ d.flag }} {{ d.machine_node }} {{ d.system_name }}
+
+                            {% elif d.state == 2 %}
+                                 <span class="sun-state-error">离线</span>
+                            {% elif d.state == 3 %}
+                                 <span class="sun-state-error">节点版本不支持</span>
+                            {% elif d.state == 4 %}
+                                 <span class="sun-state-error">读取节点信息失败</span>
+                            {% else %}
+                                  <span class="sun-state-error">未知错误</span>
+                            {% endif %}
+                             </td>
+
+                          <td>{{ d.last_update_time }}</td>
+
+                        <td>
+                                <div class="btn-group">
+
+                                  <button onclick="f_edit('{{ d.code }}')" class="btn btn-sm btn-default" type="button"><i class="fa fa-edit"></i> 编辑</button>
+                                  <button onclick="f_importUpdate('{{ d.code }}')" class="btn btn-sm btn-default" type="button"><i class="fa fa-upload"></i> 更新版本</button>
+                                  <button onclick="f_openDel('{{ d.code }}')" class="btn btn-sm btn-default" type="button" data-placement="top" data-toggle="tooltip" data-original-title="删除"><i class="fa fa-remove"></i></button>
+                                </div>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+
+
+              </div>
+            </div>
+          </div>
+      </div>
+
+      <div class="row">
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <ul class="pagination">
+                <li>
+                    <span style="margin-right:10px;color:#000;">共<span>{{ pageData.page_num}}</span>页 / <span>{{pageData.count}}</span >条</span>
+                </li>
+
+                {%  for d  in pageData.pageLabels%}
+                  {% if d.cur == 1 %}
+                    <li class="paginate_button active"><a href="#"  >{{ d.name }}</a></li>
+                  {% else %}
+                    <li class="paginate_button "><a href="/node/index?p={{d.page}}&ps={{pageData.page_size}}" >{{ d.name }}</a></li>
+                  {% endif %}
+                {% endfor %}
+
+              <!--
+              <li class="paginate_button previous" ><a href="#" data-dt-idx="0" >上一页</a></li>
+              <li class="paginate_button active"><a href="#" data-dt-idx="1" >1</a></li>
+
+              <li class="paginate_button "><a href="#" data-dt-idx="2">2</a></li>
+              <li class="paginate_button "><a href="#" data-dt-idx="3">3</a></li>
+              <li class="paginate_button "><a href="#" data-dt-idx="4">4</a></li>
+              <li class="paginate_button "><a href="#" data-dt-idx="5" >5</a></li>
+              <li class="paginate_button "><a href="#" data-dt-idx="6" >6</a></li>
+              <li class="paginate_button next"><a href="#" data-dt-idx="7" >下一页</a></li>
+              -->
+            </ul>
+
+          </div>
+       </div>
+
+    <!--节点更新版本弹窗start -->
+    <div id="ImportVersionFileDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h4 class="modal-title" >节点更新版本</h4>
+          </div>
+          <div class="modal-body">
+            <div style="padding: 5px 20px;">
+              <form class="form-horizontal calender" role="form">
+                  <div class="form-group">
+                  <label class="col-sm-3 control-label">节点编号</label>
+                  <div class="col-sm-9">
+                      <span id="import_version_dialog_node_code">code</span>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-sm-3 control-label">升级版本</label>
+                  <div class="col-sm-9">
+                    <input type="file" class="form-control" accept=".xcupdate" name="xcupdate_file"  placeholder="浏览升级安装包"  >
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+            <button type="button" onclick="f_openImportUpdate()" class="btn btn-dark">提交</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--节点更新版本弹窗end -->
+
+    </div>
+  </div>
+
+{% endblock content %}
+
+{% block javascripts %}
+  {{ block.super }}
+<script src="/static/lib/jquery/confirm/jquery-confirm.js"></script>
+<script>
+    let ele_top_loading = $("#top_loading");
+    let ele_top_msg= $("#top_msg");
+    let eleImportVersionDialogNodeCode = $("#import_version_dialog_node_code");
+    let eleXcUpdateFile = $("input[name='xcupdate_file']");
+
+    function f_edit(code) {
+        let url = "/node/edit?code="+code;
+        window.location.href = url;
+    }
+    function f_openSync() {
+
+        ele_top_loading.show();
+        $.ajax({
+               url: '/node/openSync',
+               type: "post",
+               async: true,
+               data: {},
+               dataType: "json",
+               timeout: 0,
+               error: function () {
+                   ele_top_loading.hide();
+                   myAlert("网络异常，请确定网络正常！","error");
+               },
+               success: function (res) {
+                   ele_top_loading.hide();
+                   if(1000 === res.code){
+                       myAlert(res.msg,"success");
+                       window.location.reload();
+                   }else{
+                       myAlert(res.msg,"error");
+                   }
+               }
+        });
+
+    }
+    function f_openDel(code){
+        ele_top_loading.show();
+        $.ajax({
+               url: '/node/openDel',
+               type: "post",
+               async: true,
+               data: {"code":code},
+               dataType: "json",
+               timeout: 0,
+               error: function () {
+                   ele_top_loading.hide();
+                   myAlert("网络异常，请确定网络正常！","error");
+               },
+               success: function (res) {
+                      ele_top_loading.hide();
+                   if(1000 === res.code){
+                        window.location.reload();
+                   }else{
+                        myAlert(res.msg,"error");
+                   }
+               }
+            });
+
+    }
+    function f_importUpdate(code) {
+        eleImportVersionDialogNodeCode.html(code);
+        $("#ImportVersionFileDialog").modal("show");
+
+    }
+
+    function f_openImportUpdate(){
+
+        //导入安装包
+        if (eleXcUpdateFile[0].files.length > 0){
+
+           let file = eleXcUpdateFile[0].files[0];
+           //console.log("file",file)
+            //let fs_name = file.name;
+            //let fs_size = file.size;//文件字节大小
+            //let fs_size_m = parseInt(fs_size / 1024 / 1024); //换算成M单位
+
+            let formData = new FormData();
+            formData.append('file',file)
+            let xcms_code = eleImportVersionDialogNodeCode.html();
+            formData.append('node_code',xcms_code)
+            ele_top_loading.show();
+
+            $.ajax({
+              url:"/node/openImportUpdate",
+              type:'post',
+              async: true,
+              contentType:false,
+              processData:false,
+              data:formData,
+              dataType: "json",
+              timeout: 0,
+              error: function () {
+                  ele_top_loading.hide();
+                  myAlert("网络异常，请确定网络正常！","error");
+              },
+              success: function (res) {
+                  ele_top_loading.hide();
+                    if(res.code === 1000){
+                        myAlert(res.msg,"success");
+                        $("#ImportVersionFileDialog").modal("hide");
+                        window.location.reload();
+
+                    }else{
+                        myAlert(res.msg,"error");
+                    }
+              }
+            });
+
+        }else{
+            myAlert("请选择升级包文件！","error");
+        }
+
+    }
+
+
+</script>
+
+{% endblock javascripts %}
+

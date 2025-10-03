@@ -1,0 +1,34 @@
+{
+    "host": "192.168.1.105",
+    "logDebug": false,
+    "adminPort": 9824,
+    "mediaRtspPort": 9854,
+    "mediaHttpPort": 9826,
+    "mediaSecret": "XcNvs2025zlmzs0aA9ajn7UiOWi",
+    "xcnvsSafe": "aqxY9ps21fyhyKNRyYpGvJCTp1JBeGOM",
+    "install": "D:\\Project\\bxc\\bin\\xcms.x64.windows",
+    "isEnableLoginCaptcha": true,
+    "isEnableWenSou": false,
+    "fontPath": "D:\\project\\xcnvs\\xcnvs_admin\\static\\upload\\fonts\\tsimhei.ttf",
+    "embModelPath": "E:\\models\\embedding\\bge-large-zh-v1.5",
+    "uploadDir": "D:\\project\\xcnvs\\xcnvs_admin\\static\\upload",
+    "storageDir": "D:\\project\\xcnvs\\xcnvs_admin\\static\\storage",
+	"trainAlgorithms": [
+		{
+			"code": "YOLO8",
+			"name": "YOLO8",
+			"install_dir": "E:\\project\\ai\\yolov8",
+			"venv": "venv\\Scripts\\activate.bat",
+			"processName": "yolo",
+			"defaultWeight": "yolov8n.pt"
+		},
+		{
+			"code": "YOLO11",
+			"name": "YOLO11",
+			"install_dir": "E:\\project\\BXC_AutoML\\Train_yolo11",
+			"venv": "venv\\Scripts\\activate.bat",
+			"processName": "yolo",
+			"defaultWeight": "yolo11n.pt"
+		}
+	]
+}
